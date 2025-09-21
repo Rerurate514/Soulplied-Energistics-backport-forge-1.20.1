@@ -138,9 +138,11 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
         return soulAmount;
     }
 
-    public void useSoul() {
-        --this.soulAmount;
+    public int useSoul(int soulAmount) {
+        var oldAmount = this.soulAmount;
+        this.soulAmount = Math.max(0, this.soulAmount - soulAmount);
         syncObject(this.soulAmount);
+        return oldAmount - this.soulAmount;
     }
 
     @Override

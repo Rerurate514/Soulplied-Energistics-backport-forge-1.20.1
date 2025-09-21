@@ -1,5 +1,7 @@
 package com.buuz135.industrialforegoingsouls.block.tile;
 
+import com.buuz135.industrialforegoingsouls.capabilities.ISoulHandler;
+import com.buuz135.industrialforegoingsouls.capabilities.SoulCapabilities;
 import com.hrznstudio.titanium.annotation.Save;
 import com.hrznstudio.titanium.block.BasicTileBlock;
 import net.minecraft.core.BlockPos;
@@ -25,6 +27,17 @@ public class SoulPipeBlockEntity extends NetworkBlockEntity<SoulPipeBlockEntity>
     @Override
     public void serverTick(Level level, BlockPos pos, BlockState state, SoulPipeBlockEntity blockEntity) {
         super.serverTick(level, pos, state, blockEntity);
+        for (Direction value : Direction.values()) {
+            var capability = level.getCapability(SoulCapabilities.BLOCK, value.getOpposite());
+            var network = getNetwork();
+
+            capability.ifPresent(handler -> {
+                if (network != null) {
+                    var simulated = handler.drain(4, ISoulHandler.Action.SIMULATE);
+                    handler.drain(network.addSouls(this.level, simulated), ISoulHandler.Action.EXECUTE);
+                }
+            });
+        }
     }
 
     @NotNull
