@@ -83,10 +83,10 @@ public class IndustrialForegoingSouls extends ModuleController {
         });
 
         modEventBus.addListener(this::registerCapabilities);
-
-        MinecraftForge.EVENT_BUS.addGenericListener(BlockEntity.class, this::attachCapabilities);
+        MinecraftForge.EVENT_BUS.addGenericListener(BlockEntity.class, EventPriority.LOWEST, this::attachCapabilities);
         MinecraftForge.EVENT_BUS.addListener(this::onItemTooltip);
 
+        initAppliedSouls();
     }
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
@@ -127,7 +127,7 @@ public class IndustrialForegoingSouls extends ModuleController {
         event.getGenerator().addProvider(true, new IFSoulsBlockstateProvider(event.getGenerator().getPackOutput(), MOD_ID, event.getExistingFileHelper()));
     }
 
-    public void initAppliedSouls(){
+    private void initAppliedSouls(){
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         modEventBus.addListener(this::commonSetup);
@@ -149,23 +149,20 @@ public class IndustrialForegoingSouls extends ModuleController {
     private void attachCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
         var blockEntity = event.getObject();
 
-        var genericInvCap = blockEntity.getCapability(Capabilities.GENERIC_INTERNAL_INV, null);
-        if (genericInvCap.isPresent()) {
-            event.addCapability(new ResourceLocation(MOD_ID, "soul_capability"), new ICapabilityProvider() {
-                @NotNull
-                @Override
-                public <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-                    if (capability == SoulCapabilities.BLOCK) {
-                        if (side == Direction.UP) {
-                            return blockEntity.getCapability(Capabilities.GENERIC_INTERNAL_INV, side)
-                                    .lazyMap(InterfaceSoulCap::new)
-                                    .cast();
-                        }
+        event.addCapability(new ResourceLocation(MOD_ID, "soul_capability"), new ICapabilityProvider() {
+            @NotNull
+            @Override
+            public <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
+                if (capability == SoulCapabilities.BLOCK) {
+                    if (side == Direction.UP) {
+                        return blockEntity.getCapability(Capabilities.GENERIC_INTERNAL_INV, side)
+                                .lazyMap(InterfaceSoulCap::new)
+                                .cast();
                     }
-                    return LazyOptional.empty();
                 }
-            });
-        }
+                return LazyOptional.empty();
+            }
+        });
     }
 
     private void onItemTooltip(ItemTooltipEvent event) {
