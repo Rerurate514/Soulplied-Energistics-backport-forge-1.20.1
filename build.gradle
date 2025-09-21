@@ -94,6 +94,7 @@ repositories {
         url "https://modmaven.dev/"
         content {
             includeGroup 'appeng'
+            includeGroup "mekanism"
         }
     }
 }
@@ -110,6 +111,7 @@ dependencies {
     implementation fg.deobf("curse.maven:guideme-1173950:6489464")
     // at runtime, use the full JEI jar for Forge
     runtimeOnly fg.deobf("mezz.jei:jei-1.20.1-forge:15.2.0.23")
+    implementation fg.deobf("mekanism:Mekanism:1.20.1-10.4.16.80")
 
     annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
 }
