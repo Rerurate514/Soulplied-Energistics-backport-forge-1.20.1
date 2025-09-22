@@ -3,14 +3,11 @@ package com.buuz135.industrialforegoingsouls;
 import com.buuz135.industrialforegoingsouls.block.SoulLaserBaseBlock;
 import com.buuz135.industrialforegoingsouls.block.SoulPipeBlock;
 import com.buuz135.industrialforegoingsouls.block.SoulSurgeBlock;
-import com.buuz135.industrialforegoingsouls.block.tile.SoulLaserBaseBlockEntity;
 import com.buuz135.industrialforegoingsouls.block_network.DefaultSoulNetworkElement;
 import com.buuz135.industrialforegoingsouls.block_network.SoulNetwork;
 import com.buuz135.industrialforegoingsouls.capabilities.SoulCapabilities;
-import com.buuz135.industrialforegoingsouls.capabilities.SoulCapabilityProvider;
 import com.buuz135.industrialforegoingsouls.data.*;
-import com.buuz135.industrialforegoingsouls.soulplied_energistics.AppliedHelper;
-import com.buuz135.industrialforegoingsouls.soulplied_energistics.client.ClientAppliedHelper;
+import com.buuz135.industrialforegoingsouls.soulplied_energistics.SoulpliedEnergistics;
 import com.hrznstudio.titanium.block_network.NetworkRegistry;
 import com.hrznstudio.titanium.block_network.element.NetworkElementRegistry;
 import com.hrznstudio.titanium.datagenerator.loot.TitaniumLootTableProvider;
@@ -19,31 +16,19 @@ import com.hrznstudio.titanium.event.handler.EventManager;
 import com.hrznstudio.titanium.module.ModuleController;
 import com.hrznstudio.titanium.network.NetworkHandler;
 import com.hrznstudio.titanium.tab.TitaniumTab;
-import net.minecraft.ChatFormatting;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.common.util.NonNullLazy;
 import net.minecraftforge.data.event.GatherDataEvent;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegisterEvent;
 import net.minecraftforge.registries.RegistryObject;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -74,10 +59,8 @@ public class IndustrialForegoingSouls extends ModuleController {
         });
 
         modEventBus.addListener(this::registerCapabilities);
-        MinecraftForge.EVENT_BUS.addGenericListener(BlockEntity.class, EventPriority.LOWEST, this::attachCapabilities);
-        MinecraftForge.EVENT_BUS.addListener(this::onItemTooltip);
 
-        initAppliedSouls(modEventBus);
+        new SoulpliedEnergistics().initAppliedSouls(modEventBus);
     }
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
@@ -115,46 +98,5 @@ public class IndustrialForegoingSouls extends ModuleController {
         event.getGenerator().addProvider(true, new IFSoulsSerializableRecipe(event.getGenerator(), MOD_ID));
         event.getGenerator().addProvider(true, new IFSoulsTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), MOD_ID, event.getExistingFileHelper()));
         event.getGenerator().addProvider(true, new IFSoulsBlockstateProvider(event.getGenerator().getPackOutput(), MOD_ID, event.getExistingFileHelper()));
-    }
-
-    private void initAppliedSouls(IEventBus modEventBus) {
-        modEventBus.addListener((RegisterEvent e) -> {
-            if (e.getRegistryKey().equals(Registries.BLOCK)) {
-                AppliedHelper.INSTANCE.runRegister();
-            }
-        });
-
-        EventManager.forge(AttachCapabilitiesEvent.class).process(this::attachCapabilities);
-
-        modEventBus.addListener((FMLCommonSetupEvent event) -> event.enqueueWork(() -> {
-            commonSetup(event);
-        }));
-        modEventBus.addListener((FMLClientSetupEvent event) -> event.enqueueWork(() -> {
-            onClientSetup(event);
-        }));
-    }
-
-    private void attachCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
-        var blockEntity = event.getObject();
-
-        if (blockEntity instanceof SoulLaserBaseBlockEntity soulBlock) {
-            SoulCapabilityProvider provider = new SoulCapabilityProvider(soulBlock);
-            event.addCapability(new ResourceLocation(MOD_ID, "soul"), provider);
-        }
-    }
-
-    private void onItemTooltip(ItemTooltipEvent event) {
-        if (SOUL_LASER_BLOCK != null && event.getItemStack().getItem().equals(SOUL_LASER_BLOCK.getKey().get().asItem())) {
-            event.getToolTip().add(Component.translatable("soulpliedenergistics.storage_bus")
-                    .withStyle(ChatFormatting.GRAY));
-        }
-    }
-
-    private void commonSetup(final FMLCommonSetupEvent event) {
-        AppliedHelper.INSTANCE.init();
-    }
-
-    private void onClientSetup(final FMLClientSetupEvent event) {
-        ClientAppliedHelper.INSTANCE.init();
     }
 }
