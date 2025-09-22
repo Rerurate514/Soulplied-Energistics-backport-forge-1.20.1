@@ -10,7 +10,6 @@ import com.buuz135.industrialforegoingsouls.capabilities.SoulCapabilities;
 import com.buuz135.industrialforegoingsouls.capabilities.SoulCapabilityProvider;
 import com.buuz135.industrialforegoingsouls.data.*;
 import com.buuz135.industrialforegoingsouls.soulplied_energistics.AppliedHelper;
-import com.buuz135.industrialforegoingsouls.soulplied_energistics.cap.InterfaceSoulCap;
 import com.buuz135.industrialforegoingsouls.soulplied_energistics.client.ClientAppliedHelper;
 import com.hrznstudio.titanium.block_network.NetworkRegistry;
 import com.hrznstudio.titanium.block_network.element.NetworkElementRegistry;
@@ -21,7 +20,6 @@ import com.hrznstudio.titanium.module.ModuleController;
 import com.hrznstudio.titanium.network.NetworkHandler;
 import com.hrznstudio.titanium.tab.TitaniumTab;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -32,17 +30,13 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
-import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.common.util.NonNullLazy;
 import net.minecraftforge.data.event.GatherDataEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -52,9 +46,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
 import net.minecraftforge.registries.RegistryObject;
 import org.apache.commons.lang3.tuple.Pair;
-import appeng.capabilities.Capabilities;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -86,12 +77,11 @@ public class IndustrialForegoingSouls extends ModuleController {
         MinecraftForge.EVENT_BUS.addGenericListener(BlockEntity.class, EventPriority.LOWEST, this::attachCapabilities);
         MinecraftForge.EVENT_BUS.addListener(this::onItemTooltip);
 
-        initAppliedSouls();
+        initAppliedSouls(modEventBus);
     }
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.register(SoulCapabilities.BLOCK.getClass());
-        System.out.println("Soul capabilities registered for " + MOD_ID);
     }
 
     @Override
@@ -127,42 +117,30 @@ public class IndustrialForegoingSouls extends ModuleController {
         event.getGenerator().addProvider(true, new IFSoulsBlockstateProvider(event.getGenerator().getPackOutput(), MOD_ID, event.getExistingFileHelper()));
     }
 
-    private void initAppliedSouls(){
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-
-        modEventBus.addListener(this::commonSetup);
-        modEventBus.addListener(this::onClientSetup);
-
+    private void initAppliedSouls(IEventBus modEventBus) {
         modEventBus.addListener((RegisterEvent e) -> {
             if (e.getRegistryKey().equals(Registries.BLOCK)) {
                 AppliedHelper.INSTANCE.runRegister();
             }
         });
 
-        EventManager.mod(RegisterCapabilitiesEvent.class).process(event -> {
-            event.register(SoulCapabilities.BLOCK.getClass());
-        });
-
         EventManager.forge(AttachCapabilitiesEvent.class).process(this::attachCapabilities);
+
+        modEventBus.addListener((FMLCommonSetupEvent event) -> event.enqueueWork(() -> {
+            commonSetup(event);
+        }));
+        modEventBus.addListener((FMLClientSetupEvent event) -> event.enqueueWork(() -> {
+            onClientSetup(event);
+        }));
     }
 
     private void attachCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
         var blockEntity = event.getObject();
 
-        event.addCapability(new ResourceLocation(MOD_ID, "soul_capability"), new ICapabilityProvider() {
-            @NotNull
-            @Override
-            public <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-                if (capability == SoulCapabilities.BLOCK) {
-                    if (side == Direction.UP) {
-                        return blockEntity.getCapability(Capabilities.GENERIC_INTERNAL_INV, side)
-                                .lazyMap(InterfaceSoulCap::new)
-                                .cast();
-                    }
-                }
-                return LazyOptional.empty();
-            }
-        });
+        if (blockEntity instanceof SoulLaserBaseBlockEntity soulBlock) {
+            SoulCapabilityProvider provider = new SoulCapabilityProvider(soulBlock);
+            event.addCapability(new ResourceLocation(MOD_ID, "soul"), provider);
+        }
     }
 
     private void onItemTooltip(ItemTooltipEvent event) {

@@ -4,16 +4,15 @@ import com.buuz135.industrial.block.resourceproduction.tile.ILaserBase;
 import com.buuz135.industrial.block.tile.IndustrialMachineTile;
 import com.buuz135.industrial.module.ModuleCore;
 import com.buuz135.industrialforegoingsouls.IndustrialForegoingSouls;
-import com.buuz135.industrialforegoingsouls.block_network.DefaultSoulNetworkElement;
-import com.buuz135.industrialforegoingsouls.block_network.SoulNetwork;
+import com.buuz135.industrialforegoingsouls.capabilities.ISoulHandler;
+import com.buuz135.industrialforegoingsouls.capabilities.SLBSoulCap;
+import com.buuz135.industrialforegoingsouls.capabilities.SoulCapabilities;
 import com.buuz135.industrialforegoingsouls.client.SculkSoulTankScreenAddon;
 import com.buuz135.industrialforegoingsouls.config.ConfigSoulLaserBase;
 import com.hrznstudio.titanium.annotation.Save;
 import com.hrznstudio.titanium.api.IFactory;
 import com.hrznstudio.titanium.api.augment.AugmentTypes;
 import com.hrznstudio.titanium.api.client.IScreenAddon;
-import com.hrznstudio.titanium.block_network.NetworkManager;
-import com.hrznstudio.titanium.block_network.element.NetworkElement;
 import com.hrznstudio.titanium.client.screen.addon.ProgressBarScreenAddon;
 import com.hrznstudio.titanium.component.energy.EnergyStorageComponent;
 import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
@@ -22,9 +21,9 @@ import com.hrznstudio.titanium.component.sideness.IFacingComponent;
 import com.hrznstudio.titanium.item.AugmentWrapper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -37,6 +36,10 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -168,47 +171,13 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
         return super.canAcceptAugment(augment);
     }
 
-    @Override
-    public void clearRemoved() {
-        super.clearRemoved();
-        if (level instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().submitAsync(() -> {
-                NetworkManager networkManager = NetworkManager.get(level);
+    private final LazyOptional<ISoulHandler> soulHandler = LazyOptional.of(() -> new SLBSoulCap(this));
 
-                if (networkManager.getElement(worldPosition) == null) {
-                    networkManager.addElement(createElement(level, worldPosition));
-                }
-            });
+    @Override
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, final @Nullable Direction side) {
+        if (cap == SoulCapabilities.BLOCK) {
+            return this.soulHandler.cast();
         }
-    }
-
-    @Override
-    public void onChunkUnloaded() {
-        super.onChunkUnloaded();
-        unloaded = true;
-    }
-
-    @Override
-    public void setRemoved() {
-        super.setRemoved();
-
-        if (!level.isClientSide && !unloaded) {
-            NetworkManager networkManager = NetworkManager.get(level);
-
-            NetworkElement pipe = networkManager.getElement(worldPosition);
-            if (pipe != null) {
-                //spawnDrops(pipe);
-            }
-
-            networkManager.removeElement(worldPosition);
-        }
-    }
-
-    protected NetworkElement createElement(Level level, BlockPos pos) {
-        return new DefaultSoulNetworkElement(level, pos);
-    }
-
-    public SoulNetwork getNetwork() {
-        return (SoulNetwork) NetworkManager.get(this.level).getElement(worldPosition).getNetwork();
+        return super.getCapability(cap, side);
     }
 }
