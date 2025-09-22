@@ -101,7 +101,9 @@ public class SoulPipeBlock extends BasicTileBlock<SoulPipeBlockEntity> implement
             return PipeState.BLOCK;
         }
         world.getCapability(SoulCapabilities.BLOCK, direction.getOpposite());
-        return PipeState.BLOCK;
+
+        return PipeState.NO;
+        //return PipeState.BLOCK;
     }
 
     @Nullable
