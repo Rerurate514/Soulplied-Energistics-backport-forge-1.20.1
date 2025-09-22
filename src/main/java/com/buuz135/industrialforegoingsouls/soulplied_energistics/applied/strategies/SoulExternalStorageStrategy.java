@@ -27,45 +27,17 @@ public class SoulExternalStorageStrategy implements ExternalStorageStrategy {
         this.fromSide = fromSide;
     }
 
-//    @Override
-//    public @Nullable MEStorage createWrapper(boolean b, Runnable runnable) {
-//        var cap = this.level.getCapability(SoulCapabilities.BLOCK, fromSide);
-//
-//        if (cap.isPresent()) {
-//            ISoulHandler handler = cap.orElse(null);
-//            return new SoulLaserDrillMEStorage(handler);
-//        }
-//
-//        return null;
-//    }
-
     @Override
     public @Nullable MEStorage createWrapper(boolean extractOnly, Runnable onContentsChanged) {
-        System.out.println("=== createWrapper DEBUG ===");
-        System.out.println("Position: " + fromPos);
-        System.out.println("Side: " + fromSide);
-        System.out.println("ExtractOnly: " + extractOnly);
-
         var blockEntity = this.level.getBlockEntity(fromPos);
-        System.out.println("BlockEntity: " + blockEntity);
-        System.out.println("BlockEntity class: " + (blockEntity != null ? blockEntity.getClass().getSimpleName() : "null"));
+        if (blockEntity == null) return null;
 
-        if (blockEntity == null) {
-            System.out.println("BlockEntity is null!");
-            return null;
-        }
-
-        System.out.println("Requesting capability: " + SoulCapabilities.BLOCK.getName());
         var cap = blockEntity.getCapability(SoulCapabilities.BLOCK, fromSide);
-        System.out.println("Capability present: " + cap.isPresent());
 
         if (cap.isPresent()) {
             ISoulHandler handler = cap.orElse(null);
-            System.out.println("SoulHandler: " + handler);
             return new SoulLaserDrillMEStorage(handler);
         } else {
-            System.out.println("=== CAPABILITY NOT FOUND ===");
-            System.out.println("Available capabilities on blockEntity:");
             return null;
         }
     }
