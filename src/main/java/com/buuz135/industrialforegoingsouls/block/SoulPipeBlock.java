@@ -100,10 +100,12 @@ public class SoulPipeBlock extends BasicTileBlock<SoulPipeBlockEntity> implement
         if (relativeState.getBlock() instanceof INetworkDirectionalConnection networkDirectionalConnection && networkDirectionalConnection.canConnect(relativeState, direction.getOpposite())) {
             return PipeState.BLOCK;
         }
-        world.getCapability(SoulCapabilities.BLOCK, direction.getOpposite());
 
+        var relativeBlockEntity = world.getBlockEntity(pos.relative(direction));
+        if (direction == Direction.UP && relativeBlockEntity != null && relativeBlockEntity.getCapability(SoulCapabilities.BLOCK, direction.getOpposite()).isPresent()){
+            return PipeState.BLOCK;
+        }
         return PipeState.NO;
-        //return PipeState.BLOCK;
     }
 
     @Nullable
