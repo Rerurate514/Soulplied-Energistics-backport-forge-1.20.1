@@ -175,7 +175,7 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, final @Nullable Direction side) {
-        if (cap == SoulCapabilities.BLOCK) {
+        if (cap == SoulCapabilities.BLOCK && side == Direction.UP) {
             return this.soulHandler.cast();
         }
         return super.getCapability(cap, side);
