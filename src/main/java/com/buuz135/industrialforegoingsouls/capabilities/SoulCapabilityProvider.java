@@ -18,12 +18,10 @@ public class SoulCapabilityProvider implements ICapabilityProvider {
     @Override
     public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> cap, Direction side) {
         if (cap == SoulCapabilities.BLOCK) {
-            if (side == Direction.UP) {
-                if (!capability.isPresent()) {
-                    capability = LazyOptional.of(() -> new SLBSoulCap(blockEntity));
-                }
-                return capability.cast();
+            if (!capability.isPresent()) {
+                capability = LazyOptional.of(() -> new SLBSoulCap(blockEntity));
             }
+            return capability.cast();
         }
 
         return LazyOptional.empty();
