@@ -102,7 +102,7 @@ public class SoulPipeBlock extends BasicTileBlock<SoulPipeBlockEntity> implement
         }
 
         var relativeBlockEntity = world.getBlockEntity(pos.relative(direction));
-        if (direction == Direction.DOWN && relativeBlockEntity != null && relativeBlockEntity.getCapability(SoulCapabilities.BLOCK, direction.getOpposite()).isPresent()){
+        if (relativeBlockEntity != null && relativeBlockEntity.getCapability(SoulCapabilities.BLOCK, direction.getOpposite()).isPresent()){
             return PipeState.BLOCK;
         }
         return PipeState.NO;
