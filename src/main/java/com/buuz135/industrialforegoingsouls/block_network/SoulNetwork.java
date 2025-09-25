@@ -1,12 +1,10 @@
 package com.buuz135.industrialforegoingsouls.block_network;
 
 import com.buuz135.industrialforegoingsouls.IndustrialForegoingSouls;
-import com.buuz135.industrialforegoingsouls.block.tile.SoulLaserBaseBlockEntity;
 import com.buuz135.industrialforegoingsouls.config.IFSoulsMachines;
 import com.hrznstudio.titanium.block_network.Network;
 import com.hrznstudio.titanium.block_network.NetworkFactory;
 import com.hrznstudio.titanium.block_network.NetworkManager;
-import com.hrznstudio.titanium.block_network.element.NetworkElement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -14,13 +12,11 @@ import net.minecraft.world.level.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class SoulNetwork extends Network {
 
-    public static ResourceLocation SOUL_NETWORK = ResourceLocation.fromNamespaceAndPath(IndustrialForegoingSouls.MOD_ID, "soul");
+    public static ResourceLocation SOUL_NETWORK = new ResourceLocation(IndustrialForegoingSouls.MOD_ID, "soul");
 
     private int soulAmount;
 
@@ -76,7 +72,6 @@ public class SoulNetwork extends Network {
     public ResourceLocation getType() {
         return SOUL_NETWORK;
     }
-
 
     public static class Factory implements NetworkFactory {
 

@@ -1,6 +1,5 @@
 package com.buuz135.industrialforegoingsouls.capabilities;
 
-
 public interface ISoulHandler {
 
     enum Action {

@@ -3,7 +3,7 @@ package com.buuz135.industrialforegoingsouls.capabilities;
 import com.buuz135.industrialforegoingsouls.block.tile.SoulLaserBaseBlockEntity;
 import com.buuz135.industrialforegoingsouls.config.ConfigSoulLaserBase;
 
-public class SLBSoulCap implements ISoulHandler{
+public class SLBSoulCap implements ISoulHandler {
 
     private final SoulLaserBaseBlockEntity blockEntity;
 

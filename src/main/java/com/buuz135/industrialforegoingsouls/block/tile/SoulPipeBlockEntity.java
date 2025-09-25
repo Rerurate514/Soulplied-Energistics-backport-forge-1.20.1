@@ -9,7 +9,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SoulPipeBlockEntity extends NetworkBlockEntity<SoulPipeBlockEntity> {
 
@@ -21,17 +24,23 @@ public class SoulPipeBlockEntity extends NetworkBlockEntity<SoulPipeBlockEntity>
         this.wip = false;
     }
 
-    @Override
     public void serverTick(Level level, BlockPos pos, BlockState state, SoulPipeBlockEntity blockEntity) {
         super.serverTick(level, pos, state, blockEntity);
         for (Direction value : Direction.values()) {
-            var capability = level.getCapability(SoulCapabilities.BLOCK, pos.relative(value), value.getOpposite());
-            if (capability != null) {
+            BlockPos adjacentPos = pos.relative(value);
+
+            var adjacentEntity = level.getBlockEntity(adjacentPos);
+
+            if (adjacentEntity != null) {
+                var capability = adjacentEntity.getCapability(SoulCapabilities.BLOCK, value.getOpposite());
                 var network = getNetwork();
-                if (network != null) {
-                    var simulated = capability.drain(4, ISoulHandler.Action.SIMULATE);
-                    capability.drain(network.addSouls(this.level, simulated), ISoulHandler.Action.EXECUTE);
-                }
+
+                capability.ifPresent(handler -> {
+                    if (network != null) {
+                        var simulated = handler.drain(4, ISoulHandler.Action.SIMULATE);
+                        handler.drain(network.addSouls(this.level, simulated), ISoulHandler.Action.EXECUTE);
+                    }
+                });
             }
         }
     }
@@ -42,15 +51,15 @@ public class SoulPipeBlockEntity extends NetworkBlockEntity<SoulPipeBlockEntity>
         return this;
     }
 
-//    @NotNull
-//    @Override
-//    public <U> LazyOptional<U> getCapability(@NotNull Capability<U> cap, @Nullable Direction side) {
-//        return super.getCapability(cap, side);
-//    }
-//
-//    @Override
-//    public void invalidateCaps() {
-//        super.invalidateCaps();
-//    }
+    @NotNull
+    @Override
+    public <U> LazyOptional<U> getCapability(@NotNull Capability<U> cap, @Nullable Direction side) {
+        return super.getCapability(cap, side);
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+    }
 
 }

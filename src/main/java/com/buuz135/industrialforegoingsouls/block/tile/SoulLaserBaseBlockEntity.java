@@ -4,17 +4,15 @@ import com.buuz135.industrial.block.resourceproduction.tile.ILaserBase;
 import com.buuz135.industrial.block.tile.IndustrialMachineTile;
 import com.buuz135.industrial.module.ModuleCore;
 import com.buuz135.industrialforegoingsouls.IndustrialForegoingSouls;
-import com.buuz135.industrialforegoingsouls.block_network.DefaultSoulNetworkElement;
-import com.buuz135.industrialforegoingsouls.block_network.SoulNetwork;
 import com.buuz135.industrialforegoingsouls.capabilities.ISoulHandler;
+import com.buuz135.industrialforegoingsouls.capabilities.SLBSoulCap;
+import com.buuz135.industrialforegoingsouls.capabilities.SoulCapabilities;
 import com.buuz135.industrialforegoingsouls.client.SculkSoulTankScreenAddon;
 import com.buuz135.industrialforegoingsouls.config.ConfigSoulLaserBase;
 import com.hrznstudio.titanium.annotation.Save;
 import com.hrznstudio.titanium.api.IFactory;
 import com.hrznstudio.titanium.api.augment.AugmentTypes;
 import com.hrznstudio.titanium.api.client.IScreenAddon;
-import com.hrznstudio.titanium.block_network.NetworkManager;
-import com.hrznstudio.titanium.block_network.element.NetworkElement;
 import com.hrznstudio.titanium.client.screen.addon.ProgressBarScreenAddon;
 import com.hrznstudio.titanium.component.energy.EnergyStorageComponent;
 import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
@@ -23,9 +21,9 @@ import com.hrznstudio.titanium.component.sideness.IFacingComponent;
 import com.hrznstudio.titanium.item.AugmentWrapper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -36,8 +34,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -84,7 +86,6 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
         this.addInventory(catalyst = (SidedInventoryComponent<SoulLaserBaseBlockEntity>) new SidedInventoryComponent<SoulLaserBaseBlockEntity>("lens", 50, 24 + 18, 1, 0)
                         .setColor(DyeColor.BLUE)
                         .setRange(2, 3)
-                        .setSlotToItemStackRender(0, new ItemStack(ModuleCore.LASER_LENS[11].get()))
                         .setSlotLimit(1)
                 //.setInputFilter((stack, integer) -> stack.getItem() instanceof LaserLensItem)
         );
@@ -105,14 +106,14 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
     }
 
     private void onWork() {
-        if (!catalyst.getStackInSlot(0).isEmpty() && catalyst.getStackInSlot(0).getItem().equals(ModuleCore.LASER_LENS[11].get()) && this.soulAmount < ConfigSoulLaserBase.SOUL_STORAGE_AMOUNT) {
+        if (!catalyst.getStackInSlot(0).isEmpty() && catalyst.getStackInSlot(0).getItem().equals(ModuleCore.LASER_LENS[11].get()) && this.soulAmount + ConfigSoulLaserBase.SOULS_PER_OPERATION <= ConfigSoulLaserBase.SOUL_STORAGE_AMOUNT) {
             VoxelShape box = Shapes.box(-1, 0, -1, 2, 3, 2).move(this.worldPosition.getX(), this.worldPosition.getY() - 1, this.worldPosition.getZ());
             List<LivingEntity> entities = this.level.getEntitiesOfClass(LivingEntity.class, box.bounds(), entity -> entity.getType().equals(EntityType.WARDEN));
             if (entities.size() > 0) {
                 LivingEntity first = entities.get(0);
                 if (first.getHealth() > ConfigSoulLaserBase.DAMAGE_PER_OPERATION || ConfigSoulLaserBase.KILL_WARDEN) {
                     first.hurt(first.damageSources().generic(), ConfigSoulLaserBase.DAMAGE_PER_OPERATION);
-                    this.soulAmount = Math.min(ConfigSoulLaserBase.SOUL_STORAGE_AMOUNT, this.soulAmount + ConfigSoulLaserBase.SOULS_PER_OPERATION);
+                    this.soulAmount += ConfigSoulLaserBase.SOULS_PER_OPERATION;
                     syncObject(this.soulAmount);
                 }
             }
@@ -170,4 +171,13 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
         return super.canAcceptAugment(augment);
     }
 
+    private final LazyOptional<ISoulHandler> soulHandler = LazyOptional.of(() -> new SLBSoulCap(this));
+
+    @Override
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, final @Nullable Direction side) {
+        if (cap == SoulCapabilities.BLOCK && side == Direction.UP) {
+            return this.soulHandler.cast();
+        }
+        return super.getCapability(cap, side);
+    }
 }

@@ -1,4 +1,8 @@
 {
+  "soulkey.name": "ウォーデンの魂",
+  "soulkey.description": "魂",
+  "industrialforegoingsouls.can_be_used_filter":  "*AE2インターフェースで魂を要求するために使用できます*",
+  "industrialforegoingsouls.storage_bus":  "*ソウルは上部のAE2ストレージバスからアクセスできます*",
   "block.industrialforegoingsouls.soul_laser_base": "ソウルレーザーベース",
   "block.industrialforegoingsouls.soul_network_pipe": "ソウルパイプ",
   "block.industrialforegoingsouls.soul_surge": "ソウルサージ",
