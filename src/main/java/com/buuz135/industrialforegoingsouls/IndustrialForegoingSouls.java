@@ -56,7 +56,7 @@ public class IndustrialForegoingSouls extends ModuleController {
 
         EventManager.mod(RegisterCapabilitiesEvent.class).process(event -> {
             event.register(SoulCapabilities.BLOCK.getClass());
-        });
+        }).subscribe();
 
         modEventBus.addListener(this::registerCapabilities);
 
@@ -97,6 +97,5 @@ public class IndustrialForegoingSouls extends ModuleController {
         event.getGenerator().addProvider(true, new IFSoulsRecipeProvider(event.getGenerator()));
         event.getGenerator().addProvider(true, new IFSoulsSerializableRecipe(event.getGenerator(), MOD_ID));
         event.getGenerator().addProvider(true, new IFSoulsTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), MOD_ID, event.getExistingFileHelper()));
-        event.getGenerator().addProvider(true, new IFSoulsBlockstateProvider(event.getGenerator().getPackOutput(), MOD_ID, event.getExistingFileHelper()));
     }
 }
