@@ -61,7 +61,7 @@ public class SoulKey extends AEKey {
 
     @Override
     public void writeToPacket(FriendlyByteBuf data) {
-        data.writeUtf("soul_type");
+
     }
 
     @Override
