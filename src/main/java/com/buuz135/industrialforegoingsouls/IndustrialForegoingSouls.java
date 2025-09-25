@@ -54,12 +54,7 @@ public class IndustrialForegoingSouls extends ModuleController {
         NetworkRegistry.INSTANCE.addFactory(SoulNetwork.SOUL_NETWORK, new SoulNetwork.Factory());
         NetworkElementRegistry.INSTANCE.addFactory(DefaultSoulNetworkElement.ID, new DefaultSoulNetworkElement.Factory());
 
-        EventManager.mod(RegisterCapabilitiesEvent.class).process(event -> {
-            event.register(SoulCapabilities.BLOCK.getClass());
-        }).subscribe();
-
         modEventBus.addListener(this::registerCapabilities);
-
         new SoulpliedEnergistics().initAppliedSouls(modEventBus);
     }
 
