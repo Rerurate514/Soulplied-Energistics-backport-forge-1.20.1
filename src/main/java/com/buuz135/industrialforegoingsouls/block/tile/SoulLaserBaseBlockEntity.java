@@ -24,6 +24,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -112,7 +113,8 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
             if (entities.size() > 0) {
                 LivingEntity first = entities.get(0);
                 if (first.getHealth() > ConfigSoulLaserBase.DAMAGE_PER_OPERATION || ConfigSoulLaserBase.KILL_WARDEN) {
-                    first.hurt(first.damageSources().generic(), ConfigSoulLaserBase.DAMAGE_PER_OPERATION);
+                    first.setHealth(first.getHealth() - ConfigSoulLaserBase.DAMAGE_PER_OPERATION);
+                    first.playSound(SoundEvents.WARDEN_HURT);
                     this.soulAmount += ConfigSoulLaserBase.SOULS_PER_OPERATION;
                     syncObject(this.soulAmount);
                 }
