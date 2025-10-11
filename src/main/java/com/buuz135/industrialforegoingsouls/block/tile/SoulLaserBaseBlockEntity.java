@@ -56,7 +56,7 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
     @Save
     private int soulAmount;
     private boolean unloaded;
-    
+
     // Cache for VoxelShape to avoid recreating it every tick
     private VoxelShape cachedBox;
     private static final double BOX_OFFSET_X = -1;
@@ -121,13 +121,13 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
             cachedBox = Shapes.box(BOX_OFFSET_X, BOX_OFFSET_Y, BOX_OFFSET_Z, BOX_SIZE_X, BOX_SIZE_Y, BOX_SIZE_Z)
                 .move(this.worldPosition.getX(), this.worldPosition.getY() - 1, this.worldPosition.getZ());
         }
-        
+
         List<LivingEntity> entities = this.level.getEntitiesOfClass(
-            LivingEntity.class, 
-            cachedBox.bounds(), 
+            LivingEntity.class,
+            cachedBox.bounds(),
             entity -> entity.getType().equals(EntityType.WARDEN)
         );
-        
+
         if (!entities.isEmpty()) {
             LivingEntity first = entities.get(0);
             if (first.getHealth() > ConfigSoulLaserBase.DAMAGE_PER_OPERATION || ConfigSoulLaserBase.KILL_WARDEN) {
@@ -137,13 +137,13 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
                 syncObject(this.soulAmount);
             }
         }
-        
+
         updateMaxProgress();
     }
-    
+
     private void updateMaxProgress() {
-        int maxProgress = (int) Math.floor(ConfigSoulLaserBase.MAX_PROGRESS * 
-            (this.hasAugmentInstalled(AugmentTypes.EFFICIENCY) ? 
+        int maxProgress = (int) Math.floor(ConfigSoulLaserBase.MAX_PROGRESS *
+            (this.hasAugmentInstalled(AugmentTypes.EFFICIENCY) ?
                 AugmentWrapper.getType(this.getInstalledAugments(AugmentTypes.EFFICIENCY).get(0), AugmentTypes.EFFICIENCY) : 1));
         this.work.setMaxProgress(maxProgress);
     }
@@ -151,22 +151,22 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
     @Override
     public void clientTick(Level level, BlockPos pos, BlockState state, SoulLaserBaseBlockEntity blockEntity) {
         super.clientTick(level, pos, state, blockEntity);
-        
+
         // Create cached box if needed
         if (cachedBox == null) {
             cachedBox = Shapes.box(BOX_OFFSET_X, BOX_OFFSET_Y, BOX_OFFSET_Z, BOX_SIZE_X, BOX_SIZE_Y, BOX_SIZE_Z)
                 .move(this.worldPosition.getX(), this.worldPosition.getY() - 1, this.worldPosition.getZ());
         }
-        
+
         List<Mob> entities = this.level.getEntitiesOfClass(Mob.class, cachedBox.bounds());
         for (Mob entity : entities) {
             if (entity instanceof Warden warden) {
                 warden.sonicBoomAnimationState.start(warden.tickCount - 43);
                 if (level.random.nextDouble() <= 0.10f) {
-                    level.addParticle(ParticleTypes.SCULK_SOUL, 
-                        entity.getX() + (level.random.nextDouble() - 0.5), 
-                        entity.getY() + 1.5, 
-                        entity.getZ() + (level.random.nextDouble() - 0.5), 
+                    level.addParticle(ParticleTypes.SCULK_SOUL,
+                        entity.getX() + (level.random.nextDouble() - 0.5),
+                        entity.getY() + 1.5,
+                        entity.getZ() + (level.random.nextDouble() - 0.5),
                         0, 0.1d, 0);
                 }
             }
