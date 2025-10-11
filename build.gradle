@@ -112,7 +112,7 @@ dependencies {
     // at runtime, use the full JEI jar for Forge
     runtimeOnly fg.deobf("mezz.jei:jei-1.20.1-forge:15.2.0.23")
     implementation fg.deobf("mekanism:Mekanism:1.20.1-10.4.16.80")
-
+    runtimeOnly fg.deobf("curse.maven:spark-361579:4738952")
     annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
 }
 

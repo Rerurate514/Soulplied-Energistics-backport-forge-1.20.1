@@ -23,6 +23,11 @@ public class SoulSurgeBlockEntity extends NetworkBlockEntity<SoulSurgeBlockEntit
 
     @Save
     private int tickingTime;
+    
+    // Cache to avoid repeated calculations
+    private BlockPos cachedTargetPos;
+    private int cacheUpdateCounter = 0;
+    private static final int CACHE_UPDATE_INTERVAL = 100; // Update cache every 5 seconds
 
     public SoulSurgeBlockEntity(BasicTileBlock<SoulSurgeBlockEntity> base, BlockEntityType<?> blockEntityType, BlockPos pos, BlockState state) {
         super(base, blockEntityType, pos, state);
@@ -37,51 +42,72 @@ public class SoulSurgeBlockEntity extends NetworkBlockEntity<SoulSurgeBlockEntit
     @Override
     public void serverTick(Level level, BlockPos pos, BlockState state, SoulSurgeBlockEntity blockEntity) {
         super.serverTick(level, pos, state, blockEntity);
-        if (state.getValue(SoulSurgeBlock.ENABLED)) {
-            if (tickingTime <= 0) {
-                var network = getNetwork();
-                if (network != null) {
-                    if (network.getSoulAmount() > 0) {
-                        network.useSoul(this.level);
-                        tickingTime = ConfigSoulSurge.SOUL_TIME;
-                    }
-                }
+        
+        // Early exit if not enabled
+        if (!state.getValue(SoulSurgeBlock.ENABLED)) {
+            return;
+        }
+        
+        // Consume soul if needed
+        if (tickingTime <= 0) {
+            var network = getNetwork();
+            if (network != null && network.getSoulAmount() > 0) {
+                network.useSoul(this.level);
+                tickingTime = ConfigSoulSurge.SOUL_TIME;
             }
-            if (tickingTime > 0) {
-                var targetingState = level.getBlockState(pos.relative(state.getValue(RotatableBlock.FACING_ALL).getOpposite()));
-                if (!targetingState.is(Blocks.AIR) && !targetingState.is(SoulTags.Blocks.CANT_ACCELERATE) && !targetingState.is(SoulTags.Blocks.FORGE_CANT_ACCELERATE)) {
-                    BlockEntity targetingTile = level.getBlockEntity(pos.relative(state.getValue(RotatableBlock.FACING_ALL).getOpposite()));
-                    if (targetingTile != null) {
-                        BlockEntityTicker<BlockEntity> ticker = (BlockEntityTicker<BlockEntity>) targetingState.getTicker(this.level, targetingTile.getType());
-                        if (ticker != null) {
-                            for (int i = 0; i < ConfigSoulSurge.ACCELERATION_TICK; i++) {
-                                ticker.tick(level, pos.relative(state.getValue(RotatableBlock.FACING_ALL).getOpposite()), targetingState, targetingTile);
-                            }
-                            --tickingTime;
+        }
+        
+        // Process acceleration if we have ticking time
+        if (tickingTime > 0) {
+            // Update cached target position periodically
+            if (cachedTargetPos == null || cacheUpdateCounter % CACHE_UPDATE_INTERVAL == 0) {
+                cachedTargetPos = pos.relative(state.getValue(RotatableBlock.FACING_ALL).getOpposite());
+            }
+            cacheUpdateCounter++;
+            
+            var targetingState = level.getBlockState(cachedTargetPos);
+            
+            // Check if target is not air and can be accelerated
+            if (!targetingState.is(Blocks.AIR) && 
+                !targetingState.is(SoulTags.Blocks.CANT_ACCELERATE) && 
+                !targetingState.is(SoulTags.Blocks.FORGE_CANT_ACCELERATE)) {
+                
+                BlockEntity targetingTile = level.getBlockEntity(cachedTargetPos);
+                if (targetingTile != null) {
+                    BlockEntityTicker<BlockEntity> ticker = (BlockEntityTicker<BlockEntity>) targetingState.getTicker(this.level, targetingTile.getType());
+                    if (ticker != null) {
+                        for (int i = 0; i < ConfigSoulSurge.ACCELERATION_TICK; i++) {
+                            ticker.tick(level, cachedTargetPos, targetingState, targetingTile);
                         }
-                    } else if (level instanceof ServerLevel serverLevel) {
-                        if (serverLevel.random.nextDouble() < ConfigSoulSurge.RANDOM_TICK_ACCELERATION_CHANCE) {
-                            for (int i = 0; i < ConfigSoulSurge.BLOCK_ACCELERATION_TICK; i++) {
-                                targetingState.randomTick(serverLevel, pos.relative(state.getValue(RotatableBlock.FACING_ALL).getOpposite()), serverLevel.random);
-                            }
+                        --tickingTime;
+                    }
+                } else if (level instanceof ServerLevel serverLevel) {
+                    if (serverLevel.random.nextDouble() < ConfigSoulSurge.RANDOM_TICK_ACCELERATION_CHANCE) {
+                        for (int i = 0; i < ConfigSoulSurge.BLOCK_ACCELERATION_TICK; i++) {
+                            targetingState.randomTick(serverLevel, cachedTargetPos, serverLevel.random);
+                        }
+                    }
+                    --tickingTime;
+                }
+            } else if (targetingState.is(Blocks.AIR)) {
+                // Accelerate entities in the target position
+                var box = Shapes.box(0, 0, 0, 1, 1, 1).move(cachedTargetPos.getX(), cachedTargetPos.getY(), cachedTargetPos.getZ());
+                var entities = level.getEntitiesOfClass(LivingEntity.class, box.bounds());
+                for (LivingEntity entity : entities) {
+                    if (!entity.getType().is(SoulTags.Entities.CANT_ACCELERATE)) {
+                        for (int i = 0; i < ConfigSoulSurge.ENTITIES_ACCELERATION_TICK; i++) {
+                            entity.tick();
                         }
                         --tickingTime;
                     }
                 }
-                if (targetingState.is(Blocks.AIR)) {
-                    var posOffset = pos.relative(state.getValue(RotatableBlock.FACING_ALL).getOpposite());
-                    var box = Shapes.box(0, 0, 0, 1, 1, 1).move(posOffset.getX(), posOffset.getY(), posOffset.getZ());
-                    var entities = level.getEntitiesOfClass(LivingEntity.class, box.bounds());
-                    for (LivingEntity entity : entities) {
-                        if (!entity.getType().is(SoulTags.Entities.CANT_ACCELERATE)) {
-                            for (int i = 0; i < ConfigSoulSurge.ENTITIES_ACCELERATION_TICK; i++) {
-                                entity.tick();
-                            }
-                            --tickingTime;
-                        }
-                    }
-                }
             }
         }
+    }
+    
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        cachedTargetPos = null;
     }
 }
