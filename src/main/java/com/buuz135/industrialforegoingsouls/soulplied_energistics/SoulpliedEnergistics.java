@@ -76,7 +76,7 @@ public class SoulpliedEnergistics {
 
     private void onItemTooltip(ItemTooltipEvent event) {
         if (SOUL_LASER_BLOCK != null && event.getItemStack().getItem().equals(SOUL_LASER_BLOCK.getKey().get().asItem())) {
-            event.getToolTip().add(Component.translatable("soulpliedenergistics.storage_bus")
+            event.getToolTip().add(Component.translatable("industrialforegoingsouls.storage_bus")
                     .withStyle(ChatFormatting.GRAY));
         }
     }
