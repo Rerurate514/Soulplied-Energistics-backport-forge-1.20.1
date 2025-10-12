@@ -109,8 +109,10 @@ dependencies {
     implementation fg.deobf("appeng:appliedenergistics2-forge:15.4.8")
     compileOnly fg.deobf("appeng:appliedenergistics2-forge:15.4.8:api")
     implementation fg.deobf("curse.maven:guideme-1173950:6489464")
-    // at runtime, use the full JEI jar for Forge
-    runtimeOnly fg.deobf("mezz.jei:jei-1.20.1-forge:15.2.0.23")
+
+    implementation fg.deobf("mezz.jei:jei-1.20.1-forge:15.2.0.23")
+    compileOnly fg.deobf("curse.maven:emi-580555:5872526")
+
     implementation fg.deobf("mekanism:Mekanism:1.20.1-10.4.16.80")
     runtimeOnly fg.deobf("curse.maven:spark-361579:4738952")
     annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
