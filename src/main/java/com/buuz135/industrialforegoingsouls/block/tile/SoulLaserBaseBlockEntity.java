@@ -57,6 +57,15 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
     private int soulAmount;
     private boolean unloaded;
 
+    // Cache for VoxelShape to avoid recreating it every tick
+    private VoxelShape cachedBox;
+    private static final double BOX_OFFSET_X = -1;
+    private static final double BOX_OFFSET_Y = 0;
+    private static final double BOX_OFFSET_Z = -1;
+    private static final double BOX_SIZE_X = 2;
+    private static final double BOX_SIZE_Y = 3;
+    private static final double BOX_SIZE_Z = 2;
+
     public SoulLaserBaseBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(IndustrialForegoingSouls.SOUL_LASER_BLOCK, blockPos, blockState);
         this.soulAmount = 0;
@@ -107,34 +116,58 @@ public class SoulLaserBaseBlockEntity extends IndustrialMachineTile<SoulLaserBas
     }
 
     private void onWork() {
-        if (!catalyst.getStackInSlot(0).isEmpty() && catalyst.getStackInSlot(0).getItem().equals(ModuleCore.LASER_LENS[11].get()) && this.soulAmount + ConfigSoulLaserBase.SOULS_PER_OPERATION <= ConfigSoulLaserBase.SOUL_STORAGE_AMOUNT) {
-            VoxelShape box = Shapes.box(-1, 0, -1, 2, 3, 2).move(this.worldPosition.getX(), this.worldPosition.getY() - 1, this.worldPosition.getZ());
-            List<LivingEntity> entities = this.level.getEntitiesOfClass(LivingEntity.class, box.bounds(), entity -> entity.getType().equals(EntityType.WARDEN));
-            if (entities.size() > 0) {
-                LivingEntity first = entities.get(0);
-                if (first.getHealth() > ConfigSoulLaserBase.DAMAGE_PER_OPERATION || ConfigSoulLaserBase.KILL_WARDEN) {
-                    //first.hurt(first.damageSources().generic(), ConfigSoulLaserBase.DAMAGE_PER_OPERATION);
-                    first.setHealth(first.getHealth() - ConfigSoulLaserBase.DAMAGE_PER_OPERATION);
-                    first.playSound(SoundEvents.WARDEN_HURT);
-                    this.soulAmount += ConfigSoulLaserBase.SOULS_PER_OPERATION;
-                    syncObject(this.soulAmount);
-                }
+        // Create cached box if needed
+        if (cachedBox == null) {
+            cachedBox = Shapes.box(BOX_OFFSET_X, BOX_OFFSET_Y, BOX_OFFSET_Z, BOX_SIZE_X, BOX_SIZE_Y, BOX_SIZE_Z)
+                .move(this.worldPosition.getX(), this.worldPosition.getY() - 1, this.worldPosition.getZ());
+        }
+
+        List<LivingEntity> entities = this.level.getEntitiesOfClass(
+            LivingEntity.class,
+            cachedBox.bounds(),
+            entity -> entity.getType().equals(EntityType.WARDEN)
+        );
+
+        if (!entities.isEmpty()) {
+            LivingEntity first = entities.get(0);
+            if (first.getHealth() > ConfigSoulLaserBase.DAMAGE_PER_OPERATION || ConfigSoulLaserBase.KILL_WARDEN) {
+                first.setHealth(first.getHealth() - ConfigSoulLaserBase.DAMAGE_PER_OPERATION);
+                first.playSound(SoundEvents.WARDEN_HURT);
+                this.soulAmount += ConfigSoulLaserBase.SOULS_PER_OPERATION;
+                syncObject(this.soulAmount);
             }
         }
-        int maxProgress = (int) Math.floor(ConfigSoulLaserBase.MAX_PROGRESS * (this.hasAugmentInstalled(AugmentTypes.EFFICIENCY) ? AugmentWrapper.getType(this.getInstalledAugments(AugmentTypes.EFFICIENCY).get(0), AugmentTypes.EFFICIENCY) : 1));
+
+        updateMaxProgress();
+    }
+
+    private void updateMaxProgress() {
+        int maxProgress = (int) Math.floor(ConfigSoulLaserBase.MAX_PROGRESS *
+            (this.hasAugmentInstalled(AugmentTypes.EFFICIENCY) ?
+                AugmentWrapper.getType(this.getInstalledAugments(AugmentTypes.EFFICIENCY).get(0), AugmentTypes.EFFICIENCY) : 1));
         this.work.setMaxProgress(maxProgress);
     }
 
     @Override
     public void clientTick(Level level, BlockPos pos, BlockState state, SoulLaserBaseBlockEntity blockEntity) {
         super.clientTick(level, pos, state, blockEntity);
-        VoxelShape box = Shapes.box(-1, 0, -1, 2, 3, 2).move(this.worldPosition.getX(), this.worldPosition.getY() - 1, this.worldPosition.getZ());
-        List<Mob> entities = this.level.getEntitiesOfClass(Mob.class, box.bounds());
+
+        // Create cached box if needed
+        if (cachedBox == null) {
+            cachedBox = Shapes.box(BOX_OFFSET_X, BOX_OFFSET_Y, BOX_OFFSET_Z, BOX_SIZE_X, BOX_SIZE_Y, BOX_SIZE_Z)
+                .move(this.worldPosition.getX(), this.worldPosition.getY() - 1, this.worldPosition.getZ());
+        }
+
+        List<Mob> entities = this.level.getEntitiesOfClass(Mob.class, cachedBox.bounds());
         for (Mob entity : entities) {
             if (entity instanceof Warden warden) {
                 warden.sonicBoomAnimationState.start(warden.tickCount - 43);
                 if (level.random.nextDouble() <= 0.10f) {
-                    level.addParticle(ParticleTypes.SCULK_SOUL, entity.getX() + (level.random.nextDouble() - 0.5), entity.getY() + 1.5, entity.getZ() + (level.random.nextDouble() - 0.5), 0, 0.1d, 0);
+                    level.addParticle(ParticleTypes.SCULK_SOUL,
+                        entity.getX() + (level.random.nextDouble() - 0.5),
+                        entity.getY() + 1.5,
+                        entity.getZ() + (level.random.nextDouble() - 0.5),
+                        0, 0.1d, 0);
                 }
             }
         }

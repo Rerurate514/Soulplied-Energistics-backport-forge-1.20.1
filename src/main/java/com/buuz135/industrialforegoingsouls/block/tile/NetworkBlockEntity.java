@@ -69,7 +69,18 @@ public abstract class NetworkBlockEntity<T extends ActiveTile<T>> extends Active
     }
 
     public SoulNetwork getNetwork() {
-        return (SoulNetwork) NetworkManager.get(this.level).getElement(worldPosition).getNetwork();
+        if (this.level == null) {
+            return null;
+        }
+        NetworkManager networkManager = NetworkManager.get(this.level);
+        if (networkManager == null) {
+            return null;
+        }
+        var element = networkManager.getElement(worldPosition);
+        if (element == null) {
+            return null;
+        }
+        return (SoulNetwork) element.getNetwork();
     }
 
 
