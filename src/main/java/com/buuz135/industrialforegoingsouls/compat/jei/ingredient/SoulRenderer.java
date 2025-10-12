@@ -88,8 +88,8 @@ public class SoulRenderer implements IIngredientRenderer<SoulStack> {
     @Override
     public List<Component> getTooltip(SoulStack soulStack, TooltipFlag tooltipFlag) {
         List<Component> tooltip = new ArrayList<>();
-        tooltip.add(Component.literal(soulStack.getEntityType().getDescription().getString() + " Soul"));
-        tooltip.add(Component.literal("Amount: " + soulStack.getAmount()));
+        tooltip.add(Component.translatable("soulkey.name"));
+        tooltip.add(Component.translatable("soulkey.tooltip").append(Component.literal(String.valueOf(soulStack.getAmount()))));
         return tooltip;
     }
 
