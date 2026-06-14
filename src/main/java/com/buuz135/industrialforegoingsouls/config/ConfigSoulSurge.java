@@ -29,5 +29,5 @@ public class ConfigSoulSurge {
     public static double RANDOM_TICK_ACCELERATION_CHANCE = 0.03;
 
     @ConfigVal(comment = "Register a list of blocks that will not be affected by Soul Surge.")
-    public static List<String> SOUL_SURGE_IGNORE_BLOCKS = List.of("minecraft:bedrock");
+    public static List<String> SOUL_SURGE_IGNORE_BLOCKS = List.of("minecraft:bedrock", "minecraft:dirt");
 }
