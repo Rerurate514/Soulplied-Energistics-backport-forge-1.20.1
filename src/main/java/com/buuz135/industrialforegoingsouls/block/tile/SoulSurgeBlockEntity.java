@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 
 public class SoulSurgeBlockEntity extends NetworkBlockEntity<SoulSurgeBlockEntity> {
@@ -66,13 +67,17 @@ public class SoulSurgeBlockEntity extends NetworkBlockEntity<SoulSurgeBlockEntit
             cacheUpdateCounter++;
             
             var targetingState = level.getBlockState(cachedTargetPos);
+            String blockId = ForgeRegistries.BLOCKS.getKey(targetingState.getBlock()).toString();
             
             // Check if target is not air and can be accelerated
             if (!targetingState.is(Blocks.AIR) && 
                 !targetingState.is(SoulTags.Blocks.CANT_ACCELERATE) && 
-                !targetingState.is(SoulTags.Blocks.FORGE_CANT_ACCELERATE)) {
-                
+                !targetingState.is(SoulTags.Blocks.FORGE_CANT_ACCELERATE) &&
+                //Check if the target is on the ignore list
+                !ConfigSoulSurge.SOUL_SURGE_IGNORE_BLOCKS.contains(blockId)) {
+
                 BlockEntity targetingTile = level.getBlockEntity(cachedTargetPos);
+
                 if (targetingTile != null) {
                     BlockEntityTicker<BlockEntity> ticker = (BlockEntityTicker<BlockEntity>) targetingState.getTicker(this.level, targetingTile.getType());
                     if (ticker != null) {
