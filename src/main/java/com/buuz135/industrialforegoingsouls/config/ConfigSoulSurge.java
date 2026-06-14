@@ -3,6 +3,8 @@ package com.buuz135.industrialforegoingsouls.config;
 import com.hrznstudio.titanium.annotation.config.ConfigFile;
 import com.hrznstudio.titanium.annotation.config.ConfigVal;
 
+import java.util.List;
+
 @ConfigFile.Child(IFSoulsMachines.class)
 public class ConfigSoulSurge {
 
@@ -25,4 +27,7 @@ public class ConfigSoulSurge {
     @ConfigVal(comment = "How often a random tick block will be accelerated, by default 3% of the ticks (random)")
     @ConfigVal.InRangeDouble(min = 0, max = 1)
     public static double RANDOM_TICK_ACCELERATION_CHANCE = 0.03;
+
+    @ConfigVal(comment = "Register a list of blocks that will not be affected by Soul Surge.")
+    public static List<String> SOUL_SURGE_IGNORE_BLOCKS = List.of("minecraft:bedrock");
 }
